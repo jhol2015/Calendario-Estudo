@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'self'; style-src 'unsafe-inline' 'self'; img-src 'self' data:; font-src 'self';">
     <title>Calendário de Estudos v2.0</title>
     <link rel="icon" type="image/png" href="calendario-icon.png">
     <style>
@@ -770,15 +771,15 @@
             <div class="analytics-panel">
                 <div class="stat-card">
                     <div class="stat-number" id="totalAcessos">0</div>
-                    <div class="stat-label">📊 Total de Acessos</div>
+                    <div class="stat-label">📊 Total de Acessos (Global)</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="totalImpressoes">0</div>
-                    <div class="stat-label">🖨️ Impressões</div>
+                    <div class="stat-label">🖨️ Impressões (Global)</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="totalAtividades">0</div>
-                    <div class="stat-label">📚 Atividades Criadas</div>
+                    <div class="stat-label">📚 Atividades Atuais</div>
                 </div>
             </div>
         </div>
@@ -796,7 +797,7 @@
                 </div>
                 <div class="form-group">
                     <label>📆 Ano</label>
-                    <input type="number" id="inputAno" class="form-input">
+                    <input type="number" id="inputAno" class="form-input" min="2000" max="2100">
                 </div>
             </div>
 
@@ -824,7 +825,7 @@
             </div>
 
             <div class="input-group">
-                <input type="text" id="inputAtividade" placeholder="Ex: Academia, Informática, RLM..." class="form-input">
+                <input type="text" id="inputAtividade" placeholder="Ex: Academia, Informática, RLM..." class="form-input" maxlength="100">
                 <select id="selectPrioridade" class="form-select">
                     <option value="baixa">Baixa</option>
                     <option value="media" selected>Média</option>
@@ -882,6 +883,25 @@
     </div>
 
     <script>
+        // Sanitização e segurança
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+                '/': '&#x2F;'
+            };
+            return String(text).replace(/[&<>"'\/]/g, m => map[m]);
+        }
+
+        function validarInput(texto, maxLength = 100) {
+            if (typeof texto !== 'string') return '';
+            return texto.trim().slice(0, maxLength);
+        }
+
+        // Estado da aplicação (LOCAL por sessão)
         let estado = {
             ano: new Date().getFullYear(),
             mes: new Date().getMonth(),
@@ -892,10 +912,10 @@
             modalData: null
         };
 
+        // Analytics (GLOBAL entre navegadores)
         let analytics = {
             acessos: 0,
-            impressoes: 0,
-            atividadesCriadas: 0
+            impressoes: 0
         };
 
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -919,29 +939,46 @@
             '25-12': 'Christmas Day 🇺🇸'
         };
 
+        // Carrega APENAS analytics (global)
         function carregarAnalytics() {
-            const saved = localStorage.getItem('calendario-analytics');
-            if (saved) {
-                analytics = JSON.parse(saved);
+            try {
+                const saved = localStorage.getItem('calendario-analytics-global');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed === 'object') {
+                        analytics = {
+                            acessos: parseInt(parsed.acessos) || 0,
+                            impressoes: parseInt(parsed.impressoes) || 0
+                        };
+                    }
+                }
+                analytics.acessos++;
+                salvarAnalytics();
+                atualizarAnalytics();
+            } catch (e) {
+                console.error('Erro ao carregar analytics:', e);
             }
-            analytics.acessos++;
-            salvarAnalytics();
-            atualizarAnalytics();
         }
 
         function salvarAnalytics() {
-            localStorage.setItem('calendario-analytics', JSON.stringify(analytics));
+            try {
+                localStorage.setItem('calendario-analytics-global', JSON.stringify(analytics));
+            } catch (e) {
+                console.error('Erro ao salvar analytics:', e);
+            }
         }
 
         function atualizarAnalytics() {
             document.getElementById('totalAcessos').textContent = analytics.acessos;
             document.getElementById('totalImpressoes').textContent = analytics.impressoes;
-            document.getElementById('totalAtividades').textContent = analytics.atividadesCriadas;
+            // Contador de atividades = número atual na tela
+            const atividadesDisponiveis = estado.atividades.filter(a => !atividadeEstaEmUso(a.nome));
+            document.getElementById('totalAtividades').textContent = atividadesDisponiveis.length;
         }
 
         function mostrarAlerta(mensagem) {
             const container = document.getElementById('alertContainer');
-            container.innerHTML = '<div class="alert">⚠️ ' + mensagem + '</div>';
+            container.innerHTML = '<div class="alert">⚠️ ' + escapeHtml(mensagem) + '</div>';
             setTimeout(() => container.innerHTML = '', 5000);
         }
 
@@ -1015,14 +1052,30 @@
             
             const select = document.getElementById('selectMes');
             meses.forEach((m, i) => {
-                select.innerHTML += '<option value="' + i + '">' + m + '</option>';
+                select.innerHTML += '<option value="' + i + '">' + escapeHtml(m) + '</option>';
             });
             select.value = estado.mes;
             document.getElementById('inputAno').value = estado.ano;
 
-            select.onchange = (e) => { estado.mes = parseInt(e.target.value); renderCalendario(); };
-            document.getElementById('inputAno').onchange = (e) => { estado.ano = parseInt(e.target.value); renderCalendario(); };
-            document.getElementById('inputAtividade').onkeypress = (e) => { if(e.key === 'Enter') adicionarAtividade(); };
+            select.onchange = (e) => { 
+                const val = parseInt(e.target.value);
+                if (!isNaN(val) && val >= 0 && val <= 11) {
+                    estado.mes = val;
+                    renderCalendario();
+                }
+            };
+            
+            document.getElementById('inputAno').onchange = (e) => { 
+                const val = parseInt(e.target.value);
+                if (!isNaN(val) && val >= 2000 && val <= 2100) {
+                    estado.ano = val;
+                    renderCalendario();
+                }
+            };
+            
+            document.getElementById('inputAtividade').onkeypress = (e) => { 
+                if(e.key === 'Enter') adicionarAtividade(); 
+            };
 
             renderAtividades();
             renderCalendario();
@@ -1030,8 +1083,14 @@
 
         function adicionarAtividade() {
             const input = document.getElementById('inputAtividade');
-            const nome = input.value.trim();
+            const nome = validarInput(input.value, 100);
             const prioridade = document.getElementById('selectPrioridade').value;
+            
+            // Validação de prioridade
+            if (!['baixa', 'media', 'alta', 'urgente'].includes(prioridade)) {
+                mostrarAlerta('Prioridade inválida!');
+                return;
+            }
             
             if (!nome) {
                 mostrarAlerta('Digite o nome da atividade!');
@@ -1054,12 +1113,9 @@
                 prioridade: prioridade
             });
             
-            analytics.atividadesCriadas++;
-            salvarAnalytics();
-            atualizarAnalytics();
-            
             input.value = '';
             renderAtividades();
+            atualizarAnalytics(); // Atualiza contador
         }
 
         function removerAtividade(id) {
@@ -1070,6 +1126,7 @@
             }
             estado.atividades = estado.atividades.filter(a => a.id !== id);
             renderAtividades();
+            atualizarAnalytics(); // Atualiza contador
         }
 
         function renderAtividades() {
@@ -1081,17 +1138,19 @@
             if (atividadesDisponiveis.length === 0) {
                 lista.innerHTML = '';
                 empty.style.display = 'block';
+                atualizarAnalytics();
                 return;
             }
             
             empty.style.display = 'none';
             lista.innerHTML = atividadesDisponiveis.map(a => 
-                '<div class="activity-card ' + a.prioridade + '" data-id="' + a.id + '" draggable="true" ondragstart="dragStart(' + a.id + ')">' +
-                    '<span class="priority-badge">' + a.prioridade + '</span>' +
-                    '<span>☰ ' + a.nome + '</span>' +
+                '<div class="activity-card ' + escapeHtml(a.prioridade) + '" data-id="' + a.id + '" draggable="true" ondragstart="dragStart(' + a.id + ')">' +
+                    '<span class="priority-badge">' + escapeHtml(a.prioridade) + '</span>' +
+                    '<span>☰ ' + escapeHtml(a.nome) + '</span>' +
                     '<button class="btn-delete" onclick="removerAtividade(' + a.id + ')">×</button>' +
                 '</div>'
             ).join('');
+            atualizarAnalytics();
         }
 
         function dragStart(id) {
@@ -1142,7 +1201,7 @@
                 const feriado = getFeriado(dia, estado.mes);
                 const feriadoClass = feriado ? 'feriado' : '';
                 const feriadoBadge = feriado ? '<span class="feriado-badge">FERIADO</span>' : '';
-                const feriadoNome = feriado ? '<div class="feriado-nome">' + feriado + '</div>' : '';
+                const feriadoNome = feriado ? '<div class="feriado-nome">' + escapeHtml(feriado) + '</div>' : '';
                 
                 return '<div class="calendar-day ' + feriadoClass + '" ' +
                     'ondragover="dragOver(event)" ' +
@@ -1169,7 +1228,7 @@
                     isMoving: false
                 };
                 document.getElementById('modalTitulo').textContent = 'Adicionar ao Calendário';
-                document.getElementById('modalSubtitulo').textContent = estado.draggedItem.nome + ' - ' + dia + '/' + (estado.mes + 1) + '/' + estado.ano;
+                document.getElementById('modalSubtitulo').textContent = escapeHtml(estado.draggedItem.nome) + ' - ' + dia + '/' + (estado.mes + 1) + '/' + estado.ano;
                 document.getElementById('horarioInicio').value = '';
                 document.getElementById('horarioFim').value = '';
                 document.getElementById('modal').classList.add('active');
@@ -1182,7 +1241,7 @@
                     isMoving: true
                 };
                 document.getElementById('modalTitulo').textContent = 'Reagendar Evento';
-                document.getElementById('modalSubtitulo').textContent = estado.draggedEvent.evento.atividade + ' - ' + dia + '/' + (estado.mes + 1) + '/' + estado.ano;
+                document.getElementById('modalSubtitulo').textContent = escapeHtml(estado.draggedEvent.evento.atividade) + ' - ' + dia + '/' + (estado.mes + 1) + '/' + estado.ano;
                 document.getElementById('horarioInicio').value = estado.draggedEvent.evento.horarioInicio;
                 document.getElementById('horarioFim').value = estado.draggedEvent.evento.horarioFim;
                 document.getElementById('modal').classList.add('active');
@@ -1201,6 +1260,13 @@
             
             if (!inicio || !fim) {
                 alert('Preencha os horários!');
+                return;
+            }
+
+            // Validação de horário
+            const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+            if (!timeRegex.test(inicio) || !timeRegex.test(fim)) {
+                alert('Formato de horário inválido!');
                 return;
             }
 
@@ -1247,12 +1313,12 @@
                 const div = document.getElementById('events-' + dia);
                 if (div) {
                     div.innerHTML = (estado.eventos[chave] || []).map(e =>
-                        '<div class="event-card ' + e.prioridade + '" ' +
+                        '<div class="event-card ' + escapeHtml(e.prioridade) + '" ' +
                             'draggable="true" ' +
                             'ondragstart="dragStartEvent(' + dia + ', ' + e.id + ')" ' +
                             'ondragend="dragEndEvent(event)">' +
-                            '<div class="event-time">' + e.horarioInicio + ' - ' + e.horarioFim + '</div>' +
-                            '<div class="event-name">' + e.atividade + '</div>' +
+                            '<div class="event-time">' + escapeHtml(e.horarioInicio) + ' - ' + escapeHtml(e.horarioFim) + '</div>' +
+                            '<div class="event-name">' + escapeHtml(e.atividade) + '</div>' +
                             '<button class="event-delete" onclick="removerEvento(' + dia + ', ' + e.id + ')">×</button>' +
                         '</div>'
                     ).join('');
