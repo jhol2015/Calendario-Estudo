@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendário de Estudos</title>
+    <title>Calendário de Estudos v2.0</title>
     <link rel="icon" type="image/png" href="calendario-icon.png">
     <style>
         * {
@@ -17,6 +17,13 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .container {
@@ -25,11 +32,31 @@
         }
 
         .card {
-            background: white;
+            background: rgba(255, 255, 255, 0.98);
             border-radius: 24px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
             margin-bottom: 24px;
+            animation: slideUp 0.6s ease-out;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header {
@@ -41,6 +68,24 @@
             padding: 24px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .header-icon {
@@ -48,17 +93,41 @@
             height: 72px;
             animation: float 3s ease-in-out infinite;
             filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+            position: relative;
+            z-index: 1;
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-12px); }
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(5deg); }
         }
 
         h1 {
             font-size: 36px;
             color: white;
             font-weight: 800;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .version-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .analytics-panel {
@@ -69,10 +138,35 @@
         }
 
         .stat-card {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             padding: 24px;
             border-radius: 16px;
             text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
         }
 
         .stat-number {
@@ -81,6 +175,12 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: countUp 1s ease-out;
+        }
+
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .stat-label {
@@ -112,11 +212,14 @@
             border-radius: 12px;
             font-size: 16px;
             font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .form-input:focus, .form-select:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
         }
 
         h2 {
@@ -130,6 +233,12 @@
 
         h2::before {
             content: '📚 ';
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
         }
 
         .input-group {
@@ -146,11 +255,42 @@
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
         }
 
         .btn-print {
@@ -162,6 +302,12 @@
             align-items: center;
             gap: 12px;
             font-size: 18px;
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.3);
+        }
+
+        .btn-print:hover {
+            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.5);
+            transform: translateY(-3px);
         }
 
         .activities-grid {
@@ -179,22 +325,53 @@
             justify-content: space-between;
             align-items: center;
             position: relative;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .activity-card:hover {
+            transform: translateY(-6px) scale(1.02);
         }
 
         .activity-card.baixa {
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        }
+
+        .activity-card.baixa:hover {
+            box-shadow: 0 8px 25px rgba(17, 153, 142, 0.5);
         }
 
         .activity-card.media {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .activity-card.media:hover {
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.5);
         }
 
         .activity-card.alta {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+        }
+
+        .activity-card.alta:hover {
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.5);
         }
 
         .activity-card.urgente {
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
+        }
+
+        .activity-card.urgente:hover {
+            box-shadow: 0 8px 25px rgba(250, 112, 154, 0.5);
         }
 
         .priority-badge {
@@ -207,6 +384,7 @@
             font-weight: 800;
             text-transform: uppercase;
             background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
         }
 
         .btn-delete {
@@ -218,10 +396,17 @@
             opacity: 0;
             padding: 6px 12px;
             border-radius: 10px;
+            transition: all 0.3s ease;
         }
 
         .activity-card:hover .btn-delete {
             opacity: 1;
+            transform: rotate(90deg);
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 0, 0, 0.8);
+            transform: rotate(90deg) scale(1.2);
         }
 
         .calendar-title {
@@ -232,6 +417,7 @@
             -webkit-text-fill-color: transparent;
             text-align: center;
             margin-bottom: 24px;
+            animation: fadeIn 0.8s ease-out;
         }
 
         .weekdays {
@@ -246,8 +432,15 @@
             font-weight: 800;
             color: #495057;
             padding: 14px;
-            background: #e9ecef;
+            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
             border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .weekday:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-3px);
         }
 
         .calendar-grid {
@@ -262,11 +455,26 @@
             border: 2px solid #e9ecef;
             border-radius: 14px;
             background: white;
-            position: relative; /* IMPORTANTE para a badge do feriado */
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .calendar-day.drag-over {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transform: scale(1.03);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
 
         .calendar-day.empty {
             background: #f8f9fa;
+            opacity: 0.6;
         }
 
         .calendar-day.feriado {
@@ -292,6 +500,7 @@
             border-radius: 8px;
             font-weight: 800;
             box-shadow: 0 2px 8px rgba(250, 112, 154, 0.4);
+            animation: pulse 2s ease-in-out infinite;
         }
 
         .feriado-nome {
@@ -314,28 +523,51 @@
             border: 2px solid;
             font-weight: 600;
             position: relative;
+            cursor: move;
+            transition: all 0.3s ease;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .event-card:hover {
+            transform: translateX(5px) scale(1.03);
+        }
+
+        .event-card.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
         }
 
         .event-card.baixa {
-            background: #d4f4dd;
+            background: linear-gradient(135deg, #d4f4dd 0%, #b8f0c8 100%);
             border-color: #38ef7d;
             color: #0d6832;
         }
 
         .event-card.media {
-            background: #d4f0ff;
+            background: linear-gradient(135deg, #d4f0ff 0%, #b8e5ff 100%);
             border-color: #4facfe;
             color: #0466c8;
         }
 
         .event-card.alta {
-            background: #ffd4f4;
+            background: linear-gradient(135deg, #ffd4f4 0%, #ffb8e5 100%);
             border-color: #f5576c;
             color: #a4133c;
         }
 
         .event-card.urgente {
-            background: #ffe4b8;
+            background: linear-gradient(135deg, #ffe4b8 0%, #ffd999 100%);
             border-color: #fee140;
             color: #d4a024;
         }
@@ -368,20 +600,29 @@
             align-items: center;
             justify-content: center;
             line-height: 1;
+            transition: all 0.3s ease;
         }
 
         .event-card:hover .event-delete {
             opacity: 1;
+            transform: rotate(90deg);
+        }
+
+        .event-delete:hover {
+            transform: rotate(90deg) scale(1.3);
+            background: linear-gradient(135deg, #f5576c 0%, #dc2626 100%);
         }
 
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.65);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            animation: fadeIn 0.3s ease;
         }
 
         .modal.active {
@@ -394,6 +635,19 @@
             padding: 40px;
             max-width: 520px;
             width: 90%;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideUp 0.5s ease-out;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .modal-title {
@@ -424,9 +678,15 @@
             gap: 24px;
             flex-wrap: wrap;
             padding: 20px;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             border-radius: 16px;
             margin-bottom: 24px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .legend:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .legend-item {
@@ -434,12 +694,22 @@
             align-items: center;
             gap: 12px;
             font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .legend-item:hover {
+            transform: translateY(-3px);
         }
 
         .legend-color {
             width: 32px;
             height: 32px;
             border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .legend-item:hover .legend-color {
+            transform: rotate(180deg) scale(1.1);
         }
 
         .legend-color.baixa { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
@@ -455,18 +725,31 @@
             align-items: center;
             gap: 14px;
             font-weight: 700;
-            background: #fff3cd;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
             color: #856404;
             border: 2px solid #ffc107;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .empty-state {
             text-align: center;
             color: #6c757d;
             padding: 48px;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             border-radius: 16px;
             font-weight: 600;
+            border: 2px dashed #dee2e6;
         }
 
         @media (max-width: 768px) {
@@ -482,7 +765,8 @@
 </head>
 <body>
     <div class="container">
-        <div class="card">
+        <div class="card" style="position: relative;">
+            <div class="version-badge">v2.0</div>
             <div class="analytics-panel">
                 <div class="stat-card">
                     <div class="stat-number" id="totalAcessos">0</div>
@@ -552,7 +836,7 @@
 
             <div id="atividadesLista" class="activities-grid"></div>
             <p id="emptyState" class="empty-state" style="display: none;">
-                📝 Nenhuma atividade cadastrada
+                📝 Nenhuma atividade disponível. Adicione novas ou remova eventos do calendário para recuperá-las!
             </p>
         </div>
 
@@ -592,7 +876,7 @@
 
             <div class="modal-buttons">
                 <button onclick="fecharModal()" class="btn" style="background: #e9ecef; color: #495057;">Cancelar</button>
-                <button onclick="confirmarEvento()" class="btn btn-primary">✓ Adicionar</button>
+                <button onclick="confirmarEvento()" class="btn btn-primary">✓ Confirmar</button>
             </div>
         </div>
     </div>
@@ -604,6 +888,7 @@
             atividades: [],
             eventos: {},
             draggedItem: null,
+            draggedEvent: null,
             modalData: null
         };
 
@@ -716,6 +1001,15 @@
             return null;
         }
 
+        function atividadeEstaEmUso(nomeAtividade) {
+            for (let chave in estado.eventos) {
+                if (estado.eventos[chave].some(e => e.atividade === nomeAtividade)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function init() {
             carregarAnalytics();
             
@@ -769,6 +1063,11 @@
         }
 
         function removerAtividade(id) {
+            const atividade = estado.atividades.find(a => a.id === id);
+            if (atividade && atividadeEstaEmUso(atividade.nome)) {
+                mostrarAlerta('Remova os eventos desta atividade do calendário primeiro!');
+                return;
+            }
             estado.atividades = estado.atividades.filter(a => a.id !== id);
             renderAtividades();
         }
@@ -777,14 +1076,16 @@
             const lista = document.getElementById('atividadesLista');
             const empty = document.getElementById('emptyState');
             
-            if (estado.atividades.length === 0) {
+            const atividadesDisponiveis = estado.atividades.filter(a => !atividadeEstaEmUso(a.nome));
+            
+            if (atividadesDisponiveis.length === 0) {
                 lista.innerHTML = '';
                 empty.style.display = 'block';
                 return;
             }
             
             empty.style.display = 'none';
-            lista.innerHTML = estado.atividades.map(a => 
+            lista.innerHTML = atividadesDisponiveis.map(a => 
                 '<div class="activity-card ' + a.prioridade + '" data-id="' + a.id + '" draggable="true" ondragstart="dragStart(' + a.id + ')">' +
                     '<span class="priority-badge">' + a.prioridade + '</span>' +
                     '<span>☰ ' + a.nome + '</span>' +
@@ -795,6 +1096,30 @@
 
         function dragStart(id) {
             estado.draggedItem = estado.atividades.find(a => a.id === id);
+            estado.draggedEvent = null;
+        }
+
+        function dragStartEvent(diaOrigem, eventoId) {
+            const chave = estado.ano + '-' + estado.mes + '-' + diaOrigem;
+            estado.draggedEvent = {
+                evento: estado.eventos[chave].find(e => e.id === eventoId),
+                diaOrigem: diaOrigem
+            };
+            estado.draggedItem = null;
+            event.target.classList.add('dragging');
+        }
+
+        function dragEndEvent(event) {
+            event.target.classList.remove('dragging');
+        }
+
+        function dragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
         }
 
         function getDias() {
@@ -819,7 +1144,10 @@
                 const feriadoBadge = feriado ? '<span class="feriado-badge">FERIADO</span>' : '';
                 const feriadoNome = feriado ? '<div class="feriado-nome">' + feriado + '</div>' : '';
                 
-                return '<div class="calendar-day ' + feriadoClass + '" ondragover="event.preventDefault()" ondrop="drop(' + dia + ')">' +
+                return '<div class="calendar-day ' + feriadoClass + '" ' +
+                    'ondragover="dragOver(event)" ' +
+                    'ondragleave="dragLeave(event)" ' +
+                    'ondrop="drop(event, ' + dia + ')">' +
                     feriadoBadge +
                     '<div class="day-number">' + dia + '</div>' +
                     feriadoNome +
@@ -830,19 +1158,41 @@
             renderEventos();
         }
 
-        function drop(dia) {
+        function drop(event, dia) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            
             if (estado.draggedItem) {
-                estado.modalData = { dia, atividade: estado.draggedItem };
-                document.getElementById('modalTitulo').textContent = 'Adicionar Horário';
+                estado.modalData = { 
+                    dia, 
+                    atividade: estado.draggedItem,
+                    isMoving: false
+                };
+                document.getElementById('modalTitulo').textContent = 'Adicionar ao Calendário';
                 document.getElementById('modalSubtitulo').textContent = estado.draggedItem.nome + ' - ' + dia + '/' + (estado.mes + 1) + '/' + estado.ano;
                 document.getElementById('horarioInicio').value = '';
                 document.getElementById('horarioFim').value = '';
+                document.getElementById('modal').classList.add('active');
+            }
+            else if (estado.draggedEvent) {
+                estado.modalData = { 
+                    dia, 
+                    evento: estado.draggedEvent.evento,
+                    diaOrigem: estado.draggedEvent.diaOrigem,
+                    isMoving: true
+                };
+                document.getElementById('modalTitulo').textContent = 'Reagendar Evento';
+                document.getElementById('modalSubtitulo').textContent = estado.draggedEvent.evento.atividade + ' - ' + dia + '/' + (estado.mes + 1) + '/' + estado.ano;
+                document.getElementById('horarioInicio').value = estado.draggedEvent.evento.horarioInicio;
+                document.getElementById('horarioFim').value = estado.draggedEvent.evento.horarioFim;
                 document.getElementById('modal').classList.add('active');
             }
         }
 
         function fecharModal() {
             document.getElementById('modal').classList.remove('active');
+            estado.draggedItem = null;
+            estado.draggedEvent = null;
         }
 
         function confirmarEvento() {
@@ -853,22 +1203,42 @@
                 alert('Preencha os horários!');
                 return;
             }
-            
-            const chave = estado.ano + '-' + estado.mes + '-' + estado.modalData.dia;
-            if (!estado.eventos[chave]) estado.eventos[chave] = [];
-            
-            estado.eventos[chave].push({
-                id: Date.now(),
-                atividade: estado.modalData.atividade.nome,
-                prioridade: estado.modalData.atividade.prioridade,
-                horarioInicio: inicio,
-                horarioFim: fim
-            });
-            
-            estado.eventos[chave].sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+
+            if (estado.modalData.isMoving) {
+                const chaveOrigem = estado.ano + '-' + estado.mes + '-' + estado.modalData.diaOrigem;
+                const chaveDestino = estado.ano + '-' + estado.mes + '-' + estado.modalData.dia;
+                
+                estado.eventos[chaveOrigem] = estado.eventos[chaveOrigem].filter(e => e.id !== estado.modalData.evento.id);
+                if (estado.eventos[chaveOrigem].length === 0) delete estado.eventos[chaveOrigem];
+                
+                if (!estado.eventos[chaveDestino]) estado.eventos[chaveDestino] = [];
+                estado.eventos[chaveDestino].push({
+                    id: estado.modalData.evento.id,
+                    atividade: estado.modalData.evento.atividade,
+                    prioridade: estado.modalData.evento.prioridade,
+                    horarioInicio: inicio,
+                    horarioFim: fim
+                });
+                
+                estado.eventos[chaveDestino].sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+            } else {
+                const chave = estado.ano + '-' + estado.mes + '-' + estado.modalData.dia;
+                if (!estado.eventos[chave]) estado.eventos[chave] = [];
+                
+                estado.eventos[chave].push({
+                    id: Date.now(),
+                    atividade: estado.modalData.atividade.nome,
+                    prioridade: estado.modalData.atividade.prioridade,
+                    horarioInicio: inicio,
+                    horarioFim: fim
+                });
+                
+                estado.eventos[chave].sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+            }
             
             fecharModal();
             renderEventos();
+            renderAtividades();
         }
 
         function renderEventos() {
@@ -877,7 +1247,10 @@
                 const div = document.getElementById('events-' + dia);
                 if (div) {
                     div.innerHTML = (estado.eventos[chave] || []).map(e =>
-                        '<div class="event-card ' + e.prioridade + '">' +
+                        '<div class="event-card ' + e.prioridade + '" ' +
+                            'draggable="true" ' +
+                            'ondragstart="dragStartEvent(' + dia + ', ' + e.id + ')" ' +
+                            'ondragend="dragEndEvent(event)">' +
                             '<div class="event-time">' + e.horarioInicio + ' - ' + e.horarioFim + '</div>' +
                             '<div class="event-name">' + e.atividade + '</div>' +
                             '<button class="event-delete" onclick="removerEvento(' + dia + ', ' + e.id + ')">×</button>' +
@@ -892,6 +1265,7 @@
             estado.eventos[chave] = estado.eventos[chave].filter(e => e.id !== id);
             if (estado.eventos[chave].length === 0) delete estado.eventos[chave];
             renderEventos();
+            renderAtividades();
         }
 
         function imprimirCalendario() {
