@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'self'; style-src 'unsafe-inline' 'self'; img-src 'self' data:; font-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' 'self'; style-src 'unsafe-inline' 'self'; img-src 'self' data:; font-src 'self'; frame-src https://open.spotify.com https://widget.deezer.com https://www.youtube.com https://www.youtube-nocookie.com; media-src *;">
     <title>Calendário de Estudos v3.2</title>
     <link rel="icon" type="image/png" href="calendario-icon.png">
     <style>
@@ -1493,6 +1493,28 @@
                                     <input id="pomoSound" type="checkbox" checked>
                                     <span>Som ao terminar</span>
                                 </div>
+                                <div class="pill">
+                                    <input id="pomoMusic" type="checkbox">
+                                    <span>🎵 Música durante foco</span>
+                                </div>
+                            </div>
+
+                            <div id="musicSettings" style="display:none; margin-top:12px; padding:12px; background:#f8f9fa; border-radius:12px; border:2px solid #e9ecef;">
+                                <div class="form-group" style="margin:0 0 10px 0;">
+                                    <label>🎧 Player</label>
+                                    <select id="musicPlayer" class="form-select" onchange="updateMusicInstructions()">
+                                        <option value="spotify">Spotify</option>
+                                        <option value="deezer">Deezer</option>
+                                        <option value="youtube">YouTube</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin:0;">
+                                    <label>🔗 URL da Playlist/Álbum</label>
+                                    <input id="musicUrl" type="text" class="form-input" placeholder="Cole a URL aqui...">
+                                    <div id="musicInstructions" style="font-size:11px; color:#6c757d; margin-top:6px; line-height:1.4;">
+                                        <strong>Spotify:</strong> Compartilhar → Copiar link da playlist/álbum
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-row-compact" style="margin-top:12px;">
@@ -1504,6 +1526,16 @@
                         <div class="pomodoro-foot">
                             <div class="small" id="pomoToday">🍅 Hoje: 0</div>
                             <div class="small" id="pomoStreak">🔥 Sequência: 0</div>
+                        </div>
+                    </div>
+
+                    <!-- PLAYER DE MÚSICA -->
+                    <div id="musicPlayerContainer" style="display:none; margin-top:16px; border-radius:16px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                        <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:10px; text-align:center; color:white; font-weight:800; font-size:13px;">
+                            🎵 Música de Foco
+                        </div>
+                        <div id="musicPlayerEmbed" style="background:white;">
+                            <!-- Player será inserido aqui -->
                         </div>
                     </div>
                 </div>
@@ -1859,7 +1891,8 @@
                 longMin: 15,
                 longEvery: 4,
                 autoNext: true,
-                sound: true
+                sound: true,
+                music: false
             },
             stats: {
                 dayKey: '',
@@ -1992,6 +2025,22 @@
                     pomo.settings.longEvery = clampInt(parsed.settings.longEvery, 2, 8, 4);
                     pomo.settings.autoNext = !!parsed.settings.autoNext;
                     pomo.settings.sound = !!parsed.settings.sound;
+                    pomo.settings.music = !!parsed.settings.music;
+                }
+
+                // Carregar configurações de música
+                try {
+                    const musicUrl = localStorage.getItem('pomo-music-url');
+                    const musicPlayer = localStorage.getItem('pomo-music-player');
+                    if (musicUrl) document.getElementById('musicUrl').value = musicUrl;
+                    if (musicPlayer) document.getElementById('musicPlayer').value = musicPlayer;
+                    document.getElementById('pomoMusic').checked = pomo.settings.music;
+                    if (pomo.settings.music) {
+                        document.getElementById('musicSettings').style.display = 'block';
+                        applyMusicSettings();
+                    }
+                } catch (e) {
+                    // ignora
                 }
 
                 if (parsed.stats && typeof parsed.stats === 'object') {
@@ -2241,6 +2290,7 @@ function pomodoroEnsureDayRollOver() {
             const e = document.getElementById('pomoEvery');
             const auto = document.getElementById('pomoAutoNext');
             const sound = document.getElementById('pomoSound');
+            const music = document.getElementById('pomoMusic');
 
             pomo.settings.workMin = clampInt(w?.value, 10, 90, 25);
             pomo.settings.shortMin = clampInt(s?.value, 3, 30, 5);
@@ -2248,6 +2298,10 @@ function pomodoroEnsureDayRollOver() {
             pomo.settings.longEvery = clampInt(e?.value, 2, 8, 4);
             pomo.settings.autoNext = !!auto?.checked;
             pomo.settings.sound = !!sound?.checked;
+            pomo.settings.music = !!music?.checked;
+
+            // Aplicar configurações de música
+            applyMusicSettings();
 
             // se estava parado, atualiza o tempo do modo atual para refletir a mudança
             if (!pomo.running) {
@@ -2266,6 +2320,115 @@ function pomodoroEnsureDayRollOver() {
             const open = body.classList.toggle('active');
             chev.textContent = open ? '▴' : '▾';
         }
+
+        // FUNÇÕES DE MÚSICA
+        function updateMusicInstructions() {
+            const player = document.getElementById('musicPlayer').value;
+            const instructions = document.getElementById('musicInstructions');
+            
+            const texts = {
+                spotify: '<strong>Spotify:</strong> Abra a playlist/álbum → Compartilhar → Copiar link (exemplo: https://open.spotify.com/playlist/...)',
+                deezer: '<strong>Deezer:</strong> Abra a playlist/álbum → Compartilhar → Copiar link (exemplo: https://www.deezer.com/playlist/...)',
+                youtube: '<strong>YouTube:</strong> Abra o vídeo/playlist → Compartilhar → Copiar link (exemplo: https://www.youtube.com/watch?v=... ou playlist?list=...)'
+            };
+            
+            instructions.innerHTML = texts[player] || '';
+        }
+
+        function applyMusicSettings() {
+            const musicCheckbox = document.getElementById('pomoMusic');
+            const musicSettings = document.getElementById('musicSettings');
+            const playerContainer = document.getElementById('musicPlayerContainer');
+            const playerEmbed = document.getElementById('musicPlayerEmbed');
+            
+            // Mostrar/ocultar configurações quando checkbox muda
+            musicSettings.style.display = musicCheckbox.checked ? 'block' : 'none';
+            
+            if (!musicCheckbox.checked) {
+                playerContainer.style.display = 'none';
+                return;
+            }
+            
+            const musicUrl = document.getElementById('musicUrl').value.trim();
+            const musicPlayer = document.getElementById('musicPlayer').value;
+            
+            // Salvar no localStorage
+            try {
+                localStorage.setItem('pomo-music-url', musicUrl);
+                localStorage.setItem('pomo-music-player', musicPlayer);
+            } catch (e) {
+                console.error('Erro ao salvar configurações de música:', e);
+            }
+            
+            if (!musicUrl) {
+                playerContainer.style.display = 'none';
+                return;
+            }
+            
+            // Gerar embed baseado no player e URL
+            let embedHtml = '';
+            
+            try {
+                if (musicPlayer === 'spotify') {
+                    // Extrair ID do Spotify
+                    const match = musicUrl.match(/spotify\.com\/(playlist|album|track)\/([a-zA-Z0-9]+)/);
+                    if (match) {
+                        const type = match[1];
+                        const id = match[2];
+                        embedHtml = `<iframe style="border-radius:12px; width:100%;" src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+                    }
+                } else if (musicPlayer === 'deezer') {
+                    // Extrair ID do Deezer
+                    const match = musicUrl.match(/deezer\.com\/(playlist|album|track)\/(\d+)/);
+                    if (match) {
+                        const type = match[1];
+                        const id = match[2];
+                        embedHtml = `<iframe title="deezer-widget" src="https://widget.deezer.com/widget/dark/${type}/${id}" width="100%" height="300" frameborder="0" allowtransparency="true" allow="encrypted-media; clipboard-write"></iframe>`;
+                    }
+                } else if (musicPlayer === 'youtube') {
+                    // Extrair ID do YouTube
+                    let videoId = '';
+                    let playlistId = '';
+                    
+                    // Playlist
+                    const playlistMatch = musicUrl.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+                    if (playlistMatch) {
+                        playlistId = playlistMatch[1];
+                        embedHtml = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                    } else {
+                        // Vídeo individual
+                        const videoMatch = musicUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+                        if (videoMatch) {
+                            videoId = videoMatch[1];
+                            embedHtml = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/${videoId}?autoplay=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                        }
+                    }
+                }
+                
+                if (embedHtml) {
+                    playerEmbed.innerHTML = embedHtml;
+                    playerContainer.style.display = 'block';
+                } else {
+                    playerEmbed.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545; font-weight:700;">❌ URL inválida. Verifique o link e tente novamente.</div>';
+                    playerContainer.style.display = 'block';
+                }
+            } catch (e) {
+                console.error('Erro ao processar URL de música:', e);
+                playerEmbed.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545; font-weight:700;">❌ Erro ao carregar player</div>';
+                playerContainer.style.display = 'block';
+            }
+        }
+
+        // Event listener para checkbox de música
+        document.addEventListener('DOMContentLoaded', function() {
+            const musicCheckbox = document.getElementById('pomoMusic');
+            if (musicCheckbox) {
+                musicCheckbox.addEventListener('change', function() {
+                    const musicSettings = document.getElementById('musicSettings');
+                    musicSettings.style.display = this.checked ? 'block' : 'none';
+                });
+            }
+        });
 
         function updatePomodoroActivityOptions() {
             const sel = document.getElementById('pomodoroActivity');
