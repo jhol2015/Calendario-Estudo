@@ -821,6 +821,48 @@
             font-size: 13px;
         }
 
+        /* PLAYER DE MÚSICA */
+        .music-player-header {
+            padding: 14px 16px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        /* Cores por plataforma */
+        .music-player-spotify {
+            background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+            box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+        }
+
+        .music-player-deezer {
+            background: linear-gradient(135deg, #FF6600 0%, #EF5466 100%);
+            box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+        }
+
+        .music-player-youtube {
+            background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+        }
+
+        #musicPlayerContainer {
+            transition: all 0.4s ease;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* DAY SELECTOR NO MODAL */
         .day-selector {
             display: grid;
@@ -1530,9 +1572,13 @@
                     </div>
 
                     <!-- PLAYER DE MÚSICA -->
-                    <div id="musicPlayerContainer" style="display:none; margin-top:16px; border-radius:16px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-                        <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:10px; text-align:center; color:white; font-weight:800; font-size:13px;">
-                            🎵 Música de Foco
+                    <div id="musicPlayerContainer" style="display:none; margin-top:16px; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+                        <div id="musicPlayerHeader" class="music-player-header">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span id="musicPlayerIcon" style="font-size:20px;">🎵</span>
+                                <span id="musicPlayerTitle" style="font-weight:800; font-size:14px;">Música de Foco</span>
+                            </div>
+                            <span id="musicPlayerPlatform" style="font-size:11px; font-weight:700; opacity:0.9;"></span>
                         </div>
                         <div id="musicPlayerEmbed" style="background:white;">
                             <!-- Player será inserido aqui -->
@@ -2340,6 +2386,10 @@ function pomodoroEnsureDayRollOver() {
             const musicSettings = document.getElementById('musicSettings');
             const playerContainer = document.getElementById('musicPlayerContainer');
             const playerEmbed = document.getElementById('musicPlayerEmbed');
+            const playerHeader = document.getElementById('musicPlayerHeader');
+            const playerIcon = document.getElementById('musicPlayerIcon');
+            const playerTitle = document.getElementById('musicPlayerTitle');
+            const playerPlatform = document.getElementById('musicPlayerPlatform');
             
             // Mostrar/ocultar configurações quando checkbox muda
             musicSettings.style.display = musicCheckbox.checked ? 'block' : 'none';
@@ -2365,6 +2415,38 @@ function pomodoroEnsureDayRollOver() {
                 return;
             }
             
+            // Configurar cor e ícone por plataforma
+            playerHeader.className = 'music-player-header';
+            
+            const platformConfig = {
+                spotify: {
+                    class: 'music-player-spotify',
+                    icon: '🎵',
+                    name: 'Spotify',
+                    color: '#1DB954'
+                },
+                deezer: {
+                    class: 'music-player-deezer',
+                    icon: '🎧',
+                    name: 'Deezer',
+                    color: '#FF6600'
+                },
+                youtube: {
+                    class: 'music-player-youtube',
+                    icon: '📺',
+                    name: 'YouTube',
+                    color: '#FF0000'
+                }
+            };
+            
+            const config = platformConfig[musicPlayer];
+            if (config) {
+                playerHeader.classList.add(config.class);
+                playerIcon.textContent = config.icon;
+                playerTitle.textContent = 'Música de Foco';
+                playerPlatform.textContent = config.name;
+            }
+            
             // Gerar embed baseado no player e URL
             let embedHtml = '';
             
@@ -2375,7 +2457,7 @@ function pomodoroEnsureDayRollOver() {
                     if (match) {
                         const type = match[1];
                         const id = match[2];
-                        embedHtml = `<iframe style="border-radius:12px; width:100%;" src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+                        embedHtml = `<iframe style="border-radius:0 0 12px 12px; width:100%;" src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
                     }
                 } else if (musicPlayer === 'deezer') {
                     // Extrair ID do Deezer
@@ -2383,7 +2465,7 @@ function pomodoroEnsureDayRollOver() {
                     if (match) {
                         const type = match[1];
                         const id = match[2];
-                        embedHtml = `<iframe title="deezer-widget" src="https://widget.deezer.com/widget/dark/${type}/${id}" width="100%" height="300" frameborder="0" allowtransparency="true" allow="encrypted-media; clipboard-write"></iframe>`;
+                        embedHtml = `<iframe title="deezer-widget" src="https://widget.deezer.com/widget/dark/${type}/${id}" width="100%" height="300" frameborder="0" allowtransparency="true" allow="encrypted-media; clipboard-write" style="border-radius:0 0 12px 12px;"></iframe>`;
                     }
                 } else if (musicPlayer === 'youtube') {
                     // Extrair ID do YouTube
@@ -2394,13 +2476,13 @@ function pomodoroEnsureDayRollOver() {
                     const playlistMatch = musicUrl.match(/[?&]list=([a-zA-Z0-9_-]+)/);
                     if (playlistMatch) {
                         playlistId = playlistMatch[1];
-                        embedHtml = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                        embedHtml = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:0 0 12px 12px; display:block;"></iframe>`;
                     } else {
                         // Vídeo individual
                         const videoMatch = musicUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
                         if (videoMatch) {
                             videoId = videoMatch[1];
-                            embedHtml = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/${videoId}?autoplay=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                            embedHtml = `<iframe width="100%" height="180" src="https://www.youtube.com/embed/${videoId}?autoplay=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:0 0 12px 12px; display:block;"></iframe>`;
                         }
                     }
                 }
