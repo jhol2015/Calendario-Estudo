@@ -853,11 +853,16 @@
             border-color: #667eea;
         }
 
-        /* PRINT STYLES - A4 LANDSCAPE */
+        /* PRINT STYLES - A4 LANDSCAPE - 1 PÁGINA */
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 15mm;
+                margin: 8mm;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             body {
@@ -869,17 +874,23 @@
             /* OCULTAR TUDO EXCETO CALENDÁRIO */
             .header,
             .sidebar-section,
-            .card:first-child,
+            .card,
             .btn-print,
             .version-badge,
-            .header-icon,
-            .header-title {
+            .month-selector,
+            .analytics-panel,
+            .stat-card,
+            .pomodoro,
+            #pomodoro,
+            nav,
+            aside {
                 display: none !important;
             }
 
             /* MOSTRAR APENAS O CALENDÁRIO */
             .container {
                 max-width: 100% !important;
+                width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -887,6 +898,8 @@
             .main-layout {
                 display: block !important;
                 grid-template-columns: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             .calendar-section {
@@ -896,46 +909,57 @@
                 padding: 0 !important;
                 margin: 0 !important;
                 background: white !important;
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+                width: 100% !important;
+                height: 100% !important;
             }
 
             .calendar-title {
-                font-size: 24px !important;
-                margin-bottom: 12px !important;
+                font-size: 18px !important;
+                margin-bottom: 6px !important;
+                margin-top: 0 !important;
                 color: #212529 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .month-selector {
-                display: none !important;
+                text-align: center !important;
+                font-weight: 900 !important;
             }
 
             .weekdays {
-                margin-bottom: 8px !important;
-                gap: 6px !important;
+                margin-bottom: 4px !important;
+                gap: 3px !important;
+                display: grid !important;
+                grid-template-columns: repeat(7, 1fr) !important;
             }
 
             .weekday {
-                background: #f8f9fa !important;
-                padding: 8px !important;
-                font-size: 11px !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                background: #e9ecef !important;
+                padding: 4px 2px !important;
+                font-size: 9px !important;
+                font-weight: 700 !important;
+                text-align: center !important;
+                border-radius: 2px !important;
             }
 
             .calendar-grid {
-                gap: 6px !important;
+                gap: 3px !important;
+                display: grid !important;
+                grid-template-columns: repeat(7, 1fr) !important;
+                width: 100% !important;
             }
 
             .calendar-day {
-                min-height: 90px !important;
-                padding: 6px !important;
+                min-height: 70px !important;
+                max-height: 70px !important;
+                padding: 3px !important;
                 border: 1px solid #dee2e6 !important;
-                border-radius: 6px !important;
-                page-break-inside: avoid;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                border-radius: 2px !important;
+                page-break-inside: avoid !important;
+                overflow: hidden !important;
+                font-size: 8px !important;
+            }
+
+            .calendar-day.empty {
+                background: #f8f9fa !important;
+                opacity: 0.3 !important;
             }
 
             .calendar-day.feriado {
@@ -944,30 +968,36 @@
             }
 
             .day-number {
-                font-size: 14px !important;
-                margin-bottom: 4px !important;
+                font-size: 11px !important;
+                margin-bottom: 2px !important;
+                font-weight: 800 !important;
+                line-height: 1 !important;
             }
 
             .feriado-badge {
-                font-size: 7px !important;
-                padding: 2px 6px !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                font-size: 6px !important;
+                padding: 1px 3px !important;
+                top: 2px !important;
+                right: 2px !important;
             }
 
             .feriado-nome {
-                font-size: 9px !important;
-                margin-bottom: 4px !important;
+                font-size: 7px !important;
+                margin-bottom: 2px !important;
+                line-height: 1.1 !important;
             }
 
-            /* EVENTOS - PRESERVAR CORES */
+            .events-list {
+                gap: 2px !important;
+            }
+
             .event-card {
-                padding: 6px !important;
-                font-size: 10px !important;
-                margin-bottom: 3px !important;
-                border-radius: 4px !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                padding: 3px !important;
+                font-size: 7px !important;
+                margin-bottom: 2px !important;
+                border-radius: 2px !important;
+                border-width: 1px !important;
+                line-height: 1.1 !important;
             }
 
             .event-card.baixa {
@@ -995,18 +1025,26 @@
             }
 
             .event-time {
-                font-size: 9px !important;
+                font-size: 7px !important;
+                font-weight: 800 !important;
+                line-height: 1 !important;
             }
 
             .event-name {
-                font-size: 10px !important;
-                margin-top: 2px !important;
+                font-size: 7px !important;
+                margin-top: 1px !important;
+                font-weight: 700 !important;
+                line-height: 1.1 !important;
             }
 
-            /* OCULTAR BOTÕES DE INTERAÇÃO */
+            /* OCULTAR BOTÕES E INTERAÇÕES */
             .event-delete,
             .btn-delete,
-            button {
+            .btn,
+            button,
+            .pomodoro-card,
+            .pomodoro-display,
+            .timer-progress {
                 display: none !important;
             }
         }
